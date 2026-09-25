@@ -12,3 +12,50 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+//Models//
+
+model Student {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile Profile? @relation("StudentProfile")
+  posts   Post[]   @relation("StudentPosts")
+}
+
+model Profile {
+  studentId   String   @id
+  description String
+  linkedin    String?
+  github      String?
+  profileUrl  String?
+  collegeId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student Student  @relation("StudentProfile", fields: [studentId], references: [id])
+  college College? @relation("CollegeProfiles", fields: [collegeId], references: [id])
+}
+
+model College {
+  id        String   @id @default(uuid())
+  name      String
+  borough   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profiles Profile[] @relation("CollegeProfiles")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  studentId String
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation("StudentPosts", fields: [studentId], references: [id])
+}
