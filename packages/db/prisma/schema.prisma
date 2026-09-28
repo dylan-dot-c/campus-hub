@@ -54,6 +54,7 @@ model Post {
   id        String   @id @default(uuid())
   studentId String
   title     String
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
