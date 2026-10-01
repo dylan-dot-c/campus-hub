@@ -6,3 +6,4 @@ export const Post = z.object({
 });
 
 export type CreatePostInput = z.infer<typeof Post>;
+
