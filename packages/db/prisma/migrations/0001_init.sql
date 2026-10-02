@@ -15,7 +15,7 @@ CREATE TABLE "Student" (
 -- CreateTable
 CREATE TABLE "Profile" (
     "studentId" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
+    "description" TEXT,
     "linkedin" TEXT,
     "github" TEXT,
     "profileUrl" TEXT,
