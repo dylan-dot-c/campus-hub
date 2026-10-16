@@ -3,9 +3,9 @@ stateDiagram-v2
 
     [*] --> empty
     empty --> ready: type
-    ready --> posting: submit
-    posting --> ready: edit
     ready --> empty: clear
-    empty --> [*]: delete
+    ready --> posting: submit
+    posting --> empty: 201
     posting --> error: 400
+    error --> ready: type
     error --> posting: submit
