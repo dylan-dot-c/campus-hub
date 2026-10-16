@@ -4,3 +4,8 @@
 //Dylan
 export * from "./queries/profiles";
 export * from "./schemas/profiles";
+
+//Phoenix
+export * from "./schemas/post";
+export * from "./queries/posts";
+
