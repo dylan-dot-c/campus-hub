@@ -1,0 +1,11 @@
+stateDiagram-v2
+    title Post - State Diagram
+
+    [*] --> empty
+    empty --> ready: type
+    ready --> posting: submit
+    posting --> ready: edit
+    ready --> empty: clear
+    empty --> [*]: delete
+    posting --> error: 400
+    error --> posting: submit
