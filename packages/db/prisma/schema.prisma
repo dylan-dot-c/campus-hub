@@ -28,7 +28,7 @@ model Student {
 
 model Profile {
   studentId   String   @id
-  description String
+  description String?
   linkedin    String?
   github      String?
   profileUrl  String?
