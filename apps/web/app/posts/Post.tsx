@@ -45,6 +45,7 @@ const canSubmit = status === "ready" || status === "error";
 return(
     <form onSubmit={submit}>
         <input
+        placeholder="Title"
         value={title}
         onChange={ (e) => {
             const text = e.target.value;
