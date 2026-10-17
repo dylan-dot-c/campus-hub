@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function Post() {
@@ -7,6 +8,8 @@ const [status, setStatus] = useState<"empty" | "ready" | "posting" | "error">("e
 const [content, setContent] = useState("");
 const [title, setTitle] = useState("");
 const [errorMes, setErrorMes] = useState("");
+
+const router = useRouter();
 
 //submit
 async function submit(e: React.FormEvent) {
@@ -24,7 +27,8 @@ async function submit(e: React.FormEvent) {
     if(res.ok){ //The post was successful, server saved the post to database.
         setTitle("");
         setContent("");
-        setStatus("empty")
+        setStatus("empty");
+        router.refresh();
     }else{
         const err = await res.json();
         setErrorMes(err.error.message);

@@ -3,7 +3,6 @@ stateDiagram-v2
 
     [*] --> empty
     empty --> ready: type
-    ready --> empty: clear
     ready --> posting: submit
     posting --> empty: 201
     posting --> error: 400
