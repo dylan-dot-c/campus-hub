@@ -1,0 +1,16 @@
+```mermaid
+---
+title: Post - State Diagram
+---
+stateDiagram-v2
+    [*] --> empty
+    empty --> ready: type title
+    ready --> empty: erase title
+    ready --> posting: submit
+    posting --> empty: 201 · clear + refresh
+    posting --> error: 400 (shows API error message)
+    posting --> error: network fail (catch)
+    error --> ready: type title
+    error --> empty: erase title
+    error --> posting: submit
+```

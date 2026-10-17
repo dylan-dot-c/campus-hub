@@ -30,6 +30,36 @@ Each student sees only the posts they wrote through this endpoint.
 | /api/posts | GET    | none         | 401 UNAUTHENTICATED                               | studentId |
 | /api/posts | POST   | CreatePost   | 400 BAD_JSON, 400 VALIDATION, 401 UNAUTHENTICATED | studentId |
 
+## UI states
+
+```mermaid
+stateDiagram-v2
+    title Post - State Diagram
+
+    [*] --> empty
+    empty --> ready: type title
+    ready --> empty: erase title
+    ready --> posting: submit
+    posting --> empty: 201 · clear + refresh
+    posting --> error: 400 (shows API error message)
+    posting --> error: network fail (catch)
+    error --> ready: type title
+    error --> empty: erase title
+    error --> posting: submit
+```
+
+Arrows tested:
+- `[*] --> empty`: Open `/posts`.
+- `empty --> ready`: Type a non-whitespace title.
+- `ready --> empty`: Erase the title or replace it with whitespace.
+- `ready --> posting`: Enter a title and submit the form.
+- `posting --> empty` (201): Untested until a test user exists.
+- `posting --> error` (400): Enter a title longer than 120 characters and submit.
+- `posting --> error` (network fail): Stop `pnpm dev` after opening `/posts`, then submit.
+- `error --> ready`: After an error, type a non-whitespace title.
+- `error --> empty`: After an error, erase the title or replace it with whitespace.
+- `error --> posting`: After an error, submit again.
+
 ## Examples
 
 | State / input | Behavior |
