@@ -7,5 +7,6 @@ stateDiagram-v2
     ready --> posting: submit
     posting --> empty: 201
     posting --> error: 400
+    posting --> error: network fail
     error --> ready: type
     error --> posting: submit
