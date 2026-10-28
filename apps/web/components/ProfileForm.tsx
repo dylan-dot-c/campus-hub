@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Profile = () => {
   const [description, setDescription] = useState("");
@@ -7,16 +8,51 @@ const Profile = () => {
   const [github, setGithub] = useState("");
   const [avatar, setAvatar] = useState("");
   const [college, setCollege] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ description, linkedIn, github, avatar, college }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      setError(data?.error?.message ?? "Something went wrong");
+      return;
+    }
+
+    setDescription("");
+    setLinkedIn("");
+    setGithub("");
+    setAvatar("");
+    setCollege("");
+    router.refresh();
+  };
 
   return (
     <div>
-      <form className="space-y-4 max-w-4xl border border-gray-300 p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 max-w-4xl border border-gray-300 p-4"
+      >
         <h1 className="text-2xl font-bold mb-4">Update Profile Information</h1>
         <div className="flex gap-4">
-          <div className="flex gap-4 items-center">
-            <label htmlFor="linkedin">LinkedIn URL</label>
+          <div className="flex flex-col">
+            <label htmlFor="linkedin" className="block">
+              LinkedIn URL
+            </label>
             <input
-              className="border border-gray-300 rounded-md  "
+              className="border block border-gray-300 rounded-md  "
               type="text"
               id="linkedin"
               value={linkedIn}
@@ -24,7 +60,9 @@ const Profile = () => {
             />
           </div>
           <div>
-            <label htmlFor="github">GitHub: </label>
+            <label htmlFor="github" className="block">
+              GitHub:{" "}
+            </label>
             <input
               className="border border-gray-300 rounded-md  w-auto"
               type="text"
@@ -35,7 +73,9 @@ const Profile = () => {
           </div>
         </div>
         <div>
-          <label htmlFor="avatar">Avatar URL</label>
+          <label htmlFor="avatar" className="block">
+            Avatar URL
+          </label>
           <input
             className="border border-gray-300 rounded-md  "
             type="text"
@@ -45,7 +85,9 @@ const Profile = () => {
           />
         </div>
         <div>
-          <label htmlFor="college">College</label>
+          <label htmlFor="college" className="block">
+            College
+          </label>
           <input
             className="border border-gray-300 rounded-md  "
             type="text"
@@ -55,7 +97,9 @@ const Profile = () => {
           />
         </div>
         <div>
-          <label htmlFor="description">Description</label>
+          <label htmlFor="description" className="block">
+            Description
+          </label>
           <textarea
             cols={70}
             className="border border-gray-300 rounded-md  "
@@ -65,12 +109,22 @@ const Profile = () => {
           />
         </div>
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-md"
-        >
-          Save Profile
-        </button>
+        {busy ? (
+          <button
+            disabled={busy}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          >
+            Loading...
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          >
+            Save Profile
+          </button>
+        )}
+        {error && <p className="self-center text-sm text-red-600">{error}</p>}
       </form>
     </div>
   );

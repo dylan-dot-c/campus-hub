@@ -41,6 +41,34 @@ Profiles provide a student-keyed place for personal and college information. The
 | `POST /api/profiles` with `{ "description": "Hello" }`                                          | The object is accepted, but the unknown field is stripped; the created profile has no description |
 | `POST /api/profiles` when that student already has a profile                                    | The database rejects the duplicate key; the route does not map the failure to a stable API error  |
 
+## UI States
+```mermaid
+stateDiagram-v2
+  [*] --> empty
+
+  empty --> ready: type
+  ready --> empty: clear
+  ready --> submit: submitting valid data
+
+  submit --> saved: 200 / 201 · refresh
+  submit --> error: 400 · show validation errors
+  submit --> error: network / server failure
+
+  error --> submit: resubmit corrected data
+  error --> error: type 
+  saved --> ready: edit
+```
+
+Arrows states
+- empty to ready: Fill out the form with normal information
+- ready to submit: Press the submit button
+- submit to error: Put an item of the incorrect format
+- error to submit: Fix existing 
+- error to error: Fix one issue but it causes another one
+
+> **NOTE**: THis isn't fully functional as it still depends on the user to be created. Once the user is accomplished everything will be good.
+
+
 ## Verify
 
 Run `pnpm test`. The current profile test covers schema parsing only; it does not exercise the HTTP routes or database failure responses.
