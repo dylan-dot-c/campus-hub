@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@layer base {
+  form input:invalid,
+  form select:invalid,
+  form input:required:invalid {
+    border-color: theme("colors.red.500");
+  }
+
+  form p[role="alert"] {
+    color: theme("colors.red.500");
+  }
+}

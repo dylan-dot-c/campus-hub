@@ -1,64 +1,103 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { type SubmitHandler, useForm } from "react-hook-form";
+
+type ProfileForm = {
+  linkedIn: string;
+  github: string;
+  avatar: string;
+  college: string;
+  description: string;
+  classStanding: string;
+};
+// LinkedIn profile URL
+const linkedinRegex =
+  /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_%\-]+\/?$/;
+
+// GitHub profile URL
+const githubRegex =
+  /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?\/?$/;
+
+// Image URL (URL ending in a common image extension)
+const imageUrlRegex =
+  /^https?:\/\/.+\.(?:jpg|jpeg|png|gif|webp|svg|avif)(?:\?.*)?$/i;
 
 const Profile = () => {
-  const [description, setDescription] = useState("");
-  const [linkedIn, setLinkedIn] = useState("");
-  const [github, setGithub] = useState("");
-  const [avatar, setAvatar] = useState("");
-  const [college, setCollege] = useState("");
+  // const [linkedIn, setLinkedIn] = useState("");
+
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ProfileForm>({
+    defaultValues: {
+      linkedIn: "",
+      github: "",
+      avatar: "",
+      college: "",
+      description: "",
+      classStanding: "",
+    },
+  });
 
-    const res = await fetch("/api/profile", {
+  const colleges = ["Lehman College", "BCC", "City College", "Hunter College"];
+  const standings = ["Freshman", "Sophomore", "Junior", "Senior", "Graduate"];
+
+  console.log(errors);
+
+  const onSubmit: SubmitHandler<ProfileForm> = async (data) => {
+    setError(null);
+    const res = await fetch("/api/profiles", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ description, linkedIn, github, avatar, college }),
+      body: JSON.stringify(data),
     });
-    setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => null);
       setError(data?.error?.message ?? "Something went wrong");
       return;
     }
-
-    setDescription("");
-    setLinkedIn("");
-    setGithub("");
-    setAvatar("");
-    setCollege("");
     router.refresh();
   };
 
   return (
     <div>
+      <h1 className="text-2xl font-bold mb-4">Update Profile Information</h1>
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="space-y-4 max-w-4xl border border-gray-300 p-4"
       >
-        <h1 className="text-2xl font-bold mb-4">Update Profile Information</h1>
-        <div className="flex gap-4">
+        <div className="flex justify-between ">
           <div className="flex flex-col">
             <label htmlFor="linkedin" className="block">
               LinkedIn URL
             </label>
             <input
+              {...register("linkedIn", {
+                required: "LinkedIn URL is required",
+                pattern: {
+                  value: linkedinRegex,
+                  message: "Invalid LinkedIn URL",
+                },
+              })}
               className="border block border-gray-300 rounded-md  "
               type="text"
               id="linkedin"
-              value={linkedIn}
-              onChange={(e) => setLinkedIn(e.target.value)}
+              aria-invalid={errors.linkedIn ? "true" : "false"}
             />
+            {errors.linkedIn && (
+              <p className="text-red-500" role="alert">
+                {errors.linkedIn?.message}
+              </p>
+            )}
           </div>
+
           <div>
             <label htmlFor="github" className="block">
               GitHub:{" "}
@@ -67,35 +106,80 @@ const Profile = () => {
               className="border border-gray-300 rounded-md  w-auto"
               type="text"
               id="github"
-              value={github}
-              onChange={(e) => setGithub(e.target.value)}
+              {...register("github", {
+                required: "Github is required",
+                pattern: {
+                  value: githubRegex,
+                  message: "Invalid GitHub URL",
+                },
+              })}
+              aria-invalid={errors.github ? "true" : "false"}
             />
+            {errors.github && <p role="alert">{errors.github?.message}</p>}
           </div>
         </div>
+
         <div>
           <label htmlFor="avatar" className="block">
             Avatar URL
           </label>
           <input
+            {...register("avatar", {
+              required: "Avatar URL is required",
+              pattern: {
+                value: imageUrlRegex,
+                message: "Invalid image URL",
+              },
+            })}
             className="border border-gray-300 rounded-md  "
             type="text"
             id="avatar"
-            value={avatar}
-            onChange={(e) => setAvatar(e.target.value)}
+            aria-invalid={errors.avatar ? "true" : "false"}
           />
+          {errors.avatar && <p role="alert">{errors.avatar?.message}</p>}
         </div>
         <div>
           <label htmlFor="college" className="block">
             College
           </label>
-          <input
+          <select
             className="border border-gray-300 rounded-md  "
-            type="text"
             id="college"
-            value={college}
-            onChange={(e) => setCollege(e.target.value)}
-          />
+            {...register("college", { required: "College is required" })}
+            aria-invalid={errors.college ? "true" : "false"}
+          >
+            <option value="">Select your college</option>
+            {colleges.map((college) => (
+              <option key={college} value={college}>
+                {college}
+              </option>
+            ))}
+          </select>
+          {errors.college && <p role="alert">{errors.college?.message}</p>}
         </div>
+
+        <div>
+          <label htmlFor="standing" className="block">
+            Standing
+          </label>
+          <select
+            className="border border-gray-300 rounded-md  "
+            id="standing"
+            {...register("classStanding", { required: "Standing is required" })}
+            aria-invalid={errors.classStanding ? "true" : "false"}
+          >
+            <option value="">Select your Standing</option>
+            {standings.map((standing) => (
+              <option key={standing} value={standing}>
+                {standing}
+              </option>
+            ))}
+          </select>
+          {errors.classStanding && (
+            <p role="alert">{errors.classStanding?.message}</p>
+          )}
+        </div>
+
         <div>
           <label htmlFor="description" className="block">
             Description
@@ -104,14 +188,23 @@ const Profile = () => {
             cols={70}
             className="border border-gray-300 rounded-md  "
             id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            {...register("description", {
+              required: "Description is required",
+              minLength: {
+                value: 30,
+                message: "Description is too short",
+              },
+            })}
+            aria-invalid={errors.description ? "true" : "false"}
           />
+          {errors.description && (
+            <p role="alert">{errors.description?.message}</p>
+          )}
         </div>
 
-        {busy ? (
+        {isSubmitting ? (
           <button
-            disabled={busy}
+            disabled={true}
             className="bg-blue-500 text-white px-4 py-2 rounded-md"
           >
             Loading...
