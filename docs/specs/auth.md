@@ -21,7 +21,8 @@ local stand-in (see [seams](seams.md)) and a planted lesson.
   gated; signed-out API calls get 401, pages redirect to /login.
 - Identity comes from the session **only**. The client never supplies a user
   id — no header, no param, no dev-only bypass: dev signs in like prod.
-- Signup creates the student: email is normalized (trimmed, lowercased) and
+- Signup creates the student: email is normalized (trimmed, lowercased),
+  must be at `cuny.edu` or a subdomain of it (else 400), and is
   unique — a duplicate returns 409; the password is stored only as a salted
   scrypt hash, and `passwordHash` never appears in a response.
 
@@ -38,3 +39,4 @@ app's feature epic executes it against this contract.
 
 - [ADR-0003](../adr/0003-dev-identity-stub.md) — why the stub exists and how it's guarded.
 - [ADR-0012](../adr/0012-email-password-auth.md) — email + password instead of GitHub OAuth.
+- [ADR-0013](../adr/0013-cuny-email-signup.md) — signup limited to CUNY emails.

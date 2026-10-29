@@ -20,4 +20,5 @@ that supersedes the old one.
 | 0010 | [Reviewer-agent lifecycle and authority](0010-reviewer-agent-lifecycle.md) | Accepted |
 | 0011 | [Ideation pipeline + @research subagent](0011-ideation-pipeline.md) | Accepted |
 | 0012 | [Email + password accounts instead of GitHub OAuth](0012-email-password-auth.md) | Accepted |
+| 0013 | [Signup restricted to CUNY email addresses](0013-cuny-email-signup.md) | Accepted |
 EOF
