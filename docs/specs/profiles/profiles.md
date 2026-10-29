@@ -42,6 +42,7 @@ Profiles provide a student-keyed place for personal and college information. The
 | `POST /api/profiles` when that student already has a profile                                    | The database rejects the duplicate key; the route does not map the failure to a stable API error  |
 
 ## UI States
+
 ```mermaid
 stateDiagram-v2
   [*] --> empty
@@ -55,19 +56,32 @@ stateDiagram-v2
   submit --> error: network / server failure
 
   error --> submit: resubmit corrected data
-  error --> error: type 
+  error --> error: type
   saved --> ready: edit
 ```
 
 Arrows states
+
 - empty to ready: Fill out the form with normal information
 - ready to submit: Press the submit button
 - submit to error: Put an item of the incorrect format
-- error to submit: Fix existing 
+- error to submit: Fix existing
 - error to error: Fix one issue but it causes another one
 
 > **NOTE**: THis isn't fully functional as it still depends on the user to be created. Once the user is accomplished everything will be good.
 
+## A11y Notes and brief
+
+**The component:** Adding errors for the profile form and proper validation
+**Who it could block:** Users who are disabled or physically challenged may find it difficult to spot errors when working on this form.
+
+**The pattern:** WebAIM Forms
+**Keyboard table:**
+| Key | What happens |
+|---|---|
+| Enter on "Save Profile" | Form Submits |
+| Tab / Shift+Tab | cycles inside the form when it's in a dropdown it cycles through the options |
+| Escape | when inside a dropdown box it closes it |
 
 ## Verify
 
