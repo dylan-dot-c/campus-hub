@@ -10,4 +10,4 @@ export * from "./schemas/post";
 export * from "./queries/posts";
 export * from "./schemas/student";
 export * from "./queries/students";
-
+export * from "./queries/colleges";
