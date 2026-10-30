@@ -39,6 +39,12 @@ tests use in-memory PGlite.
 
 - **Every query is scoped by the current user.** No client-supplied ids
   trusted. Foreign or unknown resources return 404, never 403.
+  - Student is the root model: every user-owned model carries `studentId`,
+    and writes take it from `currentUserId()`, never from the request.
+  - Social reads (e.g. other students' profiles and posts) may be public,
+    but only when the feature spec says so explicitly. `Student` itself
+    is never publicly readable, and `passwordHash` never leaves a query.
+  - Shared reference data (e.g. `College`) is not user-owned and not scoped.
 - **Soft delete only** where the schema has `deletedAt`; default reads
   filter it.
 - **History is transactional**: a write that implies an event writes both
