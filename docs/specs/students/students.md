@@ -81,7 +81,7 @@ Arrows to ride:
 
 | State / input | Behavior |
 |---|---|
-| POST `{"email":"ana@baruch.cuny.edu","password":"hunter2hunter2"}` | 201, returns `{ id, email, createdAt, updatedAt }` |
+| POST `ana@baruch.cuny.edu` with a valid password (8–128 characters) | 201, returns `{ id, email, createdAt, updatedAt }` |
 | POST `{"email":"  Ana@Baruch.CUNY.edu ", …}` | 201, email saved as `ana@baruch.cuny.edu` |
 | POST `{"email":"ana@gmail.com", …}` | 400 `VALIDATION`, "Use your CUNY email (ending in cuny.edu)" |
 | POST `{"email":"ana@notcuny.edu", …}` | 400 `VALIDATION` |
