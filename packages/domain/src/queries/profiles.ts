@@ -1,5 +1,5 @@
 import { prisma } from "@project/db";
-import type { CreateProfileInput } from "../schemas/profiles";
+import type { CreateProfileInput, UpdateProfileInput } from "../schemas/profiles";
 
 // list all profiles from oldest to newest
 export function listProfiles() {
@@ -14,4 +14,12 @@ export function getProfile(userId: string) {
 // creates a profile with studentId
 export function createProfile(userId: string, input: CreateProfileInput) {
   return prisma.profile.create({ data: { studentId: userId, ...input } });
+}
+
+export function updateProfile(userId: string, input: UpdateProfileInput) {
+  const { description, linkedin, github, profileUrl, collegeId } = input;
+  return prisma.profile.update({
+    where: { studentId: userId },
+    data: { description, linkedin, github, profileUrl, collegeId },
+  });
 }

@@ -45,47 +45,16 @@ Profiles provide a student-keyed place for personal and college information. The
 | `POST /api/profiles` with `{ "description": "Hello" }`                                          | The object is accepted, but the unknown field is stripped; the created profile has no description |
 | `POST /api/profiles` when that student already has a profile                                    | The database rejects the duplicate key; the route does not map the failure to a stable API error  |
 
-## UI States
+## UI states
 
-```mermaid
-stateDiagram-v2
-  [*] --> empty
-
-  empty --> ready: type
-  ready --> empty: clear
-  ready --> submit: submitting valid data
-
-  submit --> saved: 200 / 201 · refresh
-  submit --> error: 400 · show validation errors
-  submit --> error: network / server failure
-
-  error --> submit: resubmit corrected data
-  error --> error: type
-  saved --> ready: edit
-```
-
-Arrows states
-
-- empty to ready: Fill out the form with normal information
-- ready to submit: Press the submit button
-- submit to error: Put an item of the incorrect format
-- error to submit: Fix existing
-- error to error: Fix one issue but it causes another one
-
-> **NOTE**: THis isn't fully functional as it still depends on the user to be created. Once the user is accomplished everything will be good.
+The profile form loads and updates existing profiles as described by
+[edit profile](edit-profile.md). It does not call the empty-profile creation
+endpoint.
 
 ## A11y Notes and brief
 
-**The component:** Adding errors for the profile form and proper validation
-**Who it could block:** Users who are disabled or physically challenged may find it difficult to spot errors when working on this form.
-
-**The pattern:** WebAIM Forms
-**Keyboard table:**
-| Key | What happens |
-|---|---|
-| Enter on "Save Profile" | Form Submits |
-| Tab / Shift+Tab | cycles inside the form when it's in a dropdown it cycles through the options |
-| Escape | when inside a dropdown box it closes it |
+The editing form's labels, field errors, focus behavior, and save feedback
+are described by [edit profile](edit-profile.md).
 
 ## Verify
 
@@ -103,4 +72,5 @@ curl.exe -i -X POST http://localhost:3000/api/profiles -H "Content-Type: applica
 
 ## Out of scope
 
-- Editing or deleting profile fields, and fetching one profile through an HTTP route, are not implemented; no owning feature spec exists yet.
+- Editing existing profile fields is described by [edit profile](edit-profile.md).
+- Deleting profiles and fetching one profile through an HTTP route have no owning feature spec yet.
