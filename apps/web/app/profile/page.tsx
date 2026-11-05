@@ -16,8 +16,7 @@ async function ProfileEditor() {
 }
 
 export default function Page() {
-  return <main className="mx-auto max-w-2xl p-6">
-    <h1 className="mb-6 text-2xl font-bold">Edit profile</h1>
+  return <div>
     <Suspense fallback={<Loading />}><ProfileEditor /></Suspense>
-  </main>;
+  </div>;
 }

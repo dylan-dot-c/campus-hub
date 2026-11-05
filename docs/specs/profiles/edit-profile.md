@@ -32,7 +32,9 @@ without creating a duplicate profile or losing edits when a request fails.
 - The form uses `description`, `linkedin`, `github`, `profileUrl`, and
   `collegeId` consistently. College option values are database IDs, with
   college names as labels. No selection means no college.
-- Standing is absent because the data model has no corresponding field.
+- The form retains its original heading, bordered layout, field order, and
+  blue Save Profile button. Standing is visible but disabled, with an
+  explanation that it cannot be saved yet; the data model has no such field.
 - `PATCH /api/profiles/me` derives identity, validates input, and updates
   only the profile whose `studentId` equals the derived identity.
 - Requests contain at least one editable field. Unknown fields, including
