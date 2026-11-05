@@ -1,11 +1,22 @@
-import React from "react";
+import { Suspense } from "react";
+import { currentUserId } from "@project/auth";
+import { getProfile, listColleges } from "@project/domain";
 import ProfileForm from "@/components/ProfileForm";
-const Page = () => {
-  return (
-    <div>
-      <ProfileForm />
-    </div>
-  );
-};
+import Loading from "./loading";
 
-export default Page;
+export const dynamic = "force-dynamic";
+
+async function ProfileEditor() {
+  const userId = await currentUserId();
+  if (!userId) return <p>Sign in to edit your profile.</p>;
+  const [profile, colleges] = await Promise.all([getProfile(userId), listColleges()]);
+  if (!profile) return <section><h2>Profile not found</h2><p>No profile exists for your current account.</p><a href="/signup">Create an account</a></section>;
+  const { description, linkedin, github, profileUrl, collegeId } = profile;
+  return <ProfileForm initialValues={{ description, linkedin, github, profileUrl, collegeId }} colleges={colleges} />;
+}
+
+export default function Page() {
+  return <div>
+    <Suspense fallback={<Loading />}><ProfileEditor /></Suspense>
+  </div>;
+}

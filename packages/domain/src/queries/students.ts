@@ -20,7 +20,13 @@ export function getStudent(userId: string) {
 // creates a student with a hashed password
 export function createStudent(input: CreateStudentInput) {
   return prisma.student.create({
-    data: { email: input.email, passwordHash: hashPassword(input.password) },
+    data: {
+      email: input.email,
+      passwordHash: hashPassword(input.password),
+      profile: {
+        create: {},
+      },
+    },
     select: publicFields,
   });
 }
