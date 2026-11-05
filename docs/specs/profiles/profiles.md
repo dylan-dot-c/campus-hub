@@ -20,6 +20,10 @@ Profiles provide a student-keyed place for personal and college information. The
 
 ## Behavior
 
+- [Signup](../students/students.md) creates an empty profile alongside each
+  new student in the same transaction. Existing students are not backfilled
+  by signup. The standalone creation endpoint still rejects a duplicate
+  profile, including one already created during signup.
 - `GET /api/profiles` is public and returns `{ "profiles": [...] }` with every profile ordered by `createdAt` ascending. It does not filter by student or paginate results.
 - `POST /api/profiles` resolves the current identity and creates a profile associated with that student's ID. The `Profile.studentId` primary key allows at most one profile per student, and the referenced `Student` row must exist.
 - In the development identity stub, identity is resolved from the `x-user-id` header, then `DEV_USER_ID`, then the `demo-user` fallback. The stub throws in production unless `ALLOW_DEV_IDENTITY` is set; see [auth](../auth.md) and [ADR-0003](../../adr/0003-dev-identity-stub.md).
