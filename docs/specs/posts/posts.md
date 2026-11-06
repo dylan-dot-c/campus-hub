@@ -40,6 +40,7 @@ stateDiagram-v2
     empty --> ready: type title
     ready --> empty: erase title
     ready --> posting: submit
+    empty --> error: submit (title only spaces)
     posting --> empty: 201 · clear + refresh
     posting --> error: 400 (shows API error message)
     posting --> error: network fail (catch)
@@ -53,12 +54,27 @@ Arrows tested:
 - `empty --> ready`: Type a non-whitespace title.
 - `ready --> empty`: Erase the title or replace it with whitespace.
 - `ready --> posting`: Enter a title and submit the form.
+- `empty --> error`: Type only spaces in the title and press Post; the alert
+  reads "Title is required." (A fully empty title is stopped by the
+  browser's `required` message instead.)
 - `posting --> empty` (201): Untested until a test user exists.
 - `posting --> error` (400): Enter a title longer than 120 characters and submit.
 - `posting --> error` (network fail): Stop `pnpm dev` after opening `/posts`, then submit.
 - `error --> ready`: After an error, type a non-whitespace title.
 - `error --> empty`: After an error, erase the title or replace it with whitespace.
 - `error --> posting`: After an error, submit again.
+
+The error message sits in a `role="alert"` region that is always in the
+page, so screen readers announce it each time the form enters `error`.
+Verify with VoiceOver: trigger either error arrow above and hear the message
+read without moving focus.
+
+The title field is `required`, so screen readers announce it as required.
+The Post button uses `aria-disabled` instead of `disabled`, so it stays in
+the Tab order in every state. While the title is blank or a post is in
+flight it is announced as dimmed and drawn at half opacity
+(`button[aria-disabled="true"]` in `globals.css`); pressing it then never
+sends a request.
 
 ## Examples
 

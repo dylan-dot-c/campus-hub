@@ -14,6 +14,13 @@ const router = useRouter();
 //submit
 async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // aria-disabled doesn't block clicks; this does
+    if (status === "posting") return;
+    if (title.trim() === "") { // `required` lets a title of only spaces through
+        setErrorMes("Title is required.");
+        setStatus("error");
+        return;
+    }
     setStatus("posting");
 
     try{
@@ -40,12 +47,13 @@ async function submit(e: React.FormEvent) {
 }
 }
 
-const canSubmit = status === "ready" || status === "error";
+const canSubmit = status !== "posting" && title.trim() !== "";
 
 return(
     <form onSubmit={submit}>
+    <label>Title: 
         <input
-        placeholder="Title"
+        required
         value={title}
         onChange={ (e) => {
             const text = e.target.value;
@@ -53,12 +61,15 @@ return(
             setStatus(text.trim() === "" ? "empty" : "ready");
             }}
         ></input>
+        </label>
+        <label>Content:
         <textarea
         value={content}
         onChange={ (e) => setContent(e.target.value)}
-        />
-         {status === "error" && <p>{errorMes}</p>}   
-        <button type="submit" disabled={!canSubmit}>Post</button>
+        /></label>
+        <p role="alert">{status === "error" ? errorMes : ""}</p>
+
+        <button type="submit" aria-disabled={!canSubmit}>Post</button>
     </form>
 )
 }
