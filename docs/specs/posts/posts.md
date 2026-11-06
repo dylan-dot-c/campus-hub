@@ -72,18 +72,17 @@ Arrows tested:
 
 ## Verify
 - `pnpm test` from the repo root runs the `Post` schema tests.
-- With `pnpm dev` running, create a post with curl, then
-  `curl -s localhost:3000/api/posts -H 'x-user-id: someone-else'` should
-  return an empty list.
+- With `pnpm dev` running, sign in as one student and create a post, then
+  sign in as a second student in another browser: `/api/posts` returns an
+  empty list.
 
 ## Constraints & decisions
 - `createPost` accepts only `title` and `content`. `id`, `studentId`,
   `createdAt` and `updatedAt` are set by the server.
-- A post needs a real student behind it (foreign key to `Student`). The
-  identity stub's `demo-user` has to exist in the database for create to work.
+- A post needs a real student behind it (foreign key to `Student`); a
+  session always belongs to one ([auth](../auth.md)).
 
 ## Out of scope
 - Editing, deleting, or viewing a single post: no spec yet.
 - A shared feed of everyone's posts: no spec yet.
 - Pagination: no spec yet. (returning a list in chunks).
-- Real sign-in: the identity stub reads `x-user-id` until week 8.

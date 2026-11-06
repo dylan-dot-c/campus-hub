@@ -1,12 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 // one status instead of booleans — can't be submitting and error at once
 // empty vs ready is derived from the inputs (see docs/specs/students/students.md)
-type Status = "idle" | "submitting" | "done" | "error";
+type Status = "idle" | "submitting" | "error";
 
 export function SignupForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -15,10 +17,10 @@ export function SignupForm() {
   const filled = email.trim() !== "" && password !== "";
   const submitting = status === "submitting";
 
-  // typing leaves done/error and goes back to empty/ready
+  // typing leaves error and goes back to empty/ready
   function edit(set: (v: string) => void, value: string) {
     set(value);
-    if (status === "done" || status === "error") setStatus("idle");
+    if (status === "error") setStatus("idle");
   }
 
   async function submit(e: React.FormEvent) {
@@ -32,9 +34,9 @@ export function SignupForm() {
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
-        setEmail("");
-        setPassword("");
-        setStatus("done");
+        // signup signed us in — go straight to the app
+        router.push("/profile");
+        router.refresh();
       } else {
         const data = await res.json().catch(() => null);
         setErrorMes(data?.error?.message ?? "Something went wrong");
@@ -74,7 +76,6 @@ export function SignupForm() {
       </fieldset>
 
       {status === "error" && <p className="text-sm text-red-600">{errorMes}</p>}
-      {status === "done" && <p className="text-sm text-green-700">Account created</p>}
 
       <button
         type="submit"
