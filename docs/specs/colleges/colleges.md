@@ -39,7 +39,7 @@ can see which campuses are on it — before signing up or making a profile.
 | GET `/api/colleges?q=BAR` | 200, only Baruch College |
 | GET `/api/colleges?q=   ` | 200, all colleges |
 | GET `/api/colleges?q=harvard` | 200, empty list |
-| GET with no `x-user-id` header | 200, same as signed in |
+| GET signed out (no session cookie) | 200, same as signed in |
 
 ## Verify
 - `pnpm test:integration` runs the colleges integration tests (`pnpm test`

@@ -1,3 +1,9 @@
-// Re-exports the auth/identity layer. Currently a dev stub (currentUserId from
-// headers); replaced with real auth in Week 8.
+// Re-exports the auth/identity layer: database sessions and currentUserId().
 export { currentUserId } from "./current-user";
+export {
+  createSession,
+  deleteSession,
+  sessionCookie,
+  clearedSessionCookie,
+  tokenFromRequest,
+} from "./session";
