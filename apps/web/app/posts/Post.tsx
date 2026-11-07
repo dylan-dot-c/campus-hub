@@ -53,6 +53,7 @@ return(
     <form onSubmit={submit}>
     <label>Title: 
         <input
+        id="title"
         required
         value={title}
         onChange={ (e) => {

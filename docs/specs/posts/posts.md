@@ -11,8 +11,10 @@ Each student sees only the posts they wrote through this endpoint.
 - `packages/domain/src/schemas/post.ts`: `Post` Zod schema
 - `packages/domain/src/queries/posts.ts`: `listPosts`, `createPost`
 - `apps/web/app/api/posts/route.ts`: `GET` and `POST /api/posts`
-- `apps/web/app/posts/`: the `/posts` page: `Post.tsx` (form) and
-  `PostList.tsx` (the student's own posts, rendered on the server)
+- `apps/web/app/posts/`: the `/posts` page: `Post.tsx` (form),
+  `PostList.tsx` (the student's own posts, rendered on the server, plus
+  `PostListSkeleton` for loading),
+  `error.tsx` (retry card when the list can't load)
 - `packages/domain/tests/post-schema.test.ts`: schema tests
 
 
@@ -26,8 +28,8 @@ Each student sees only the posts they wrote through this endpoint.
 - A signed-out request returns 401 `UNAUTHENTICATED`.
 - A student never sees another student's posts through this endpoint.
 - The `/posts` page shows the form, then the current student's posts newest
-  first (title as a heading, then content), or "No posts yet" when there are
-  none.
+  first (title as a heading, then content). The list has its own loading,
+  empty, and error states (see UI states).
 - Every error has the shape `{ error: { code, message } }`.
 
 | Path       | Method | Input schema | Error codes                                       | Scoped by |
@@ -36,6 +38,38 @@ Each student sees only the posts they wrote through this endpoint.
 | /api/posts | POST   | CreatePost   | 400 BAD_JSON, 400 VALIDATION, 401 UNAUTHENTICATED | studentId |
 
 ## UI states
+
+### Reading: the post list
+
+```mermaid
+stateDiagram-v2
+    title PostList - State Diagram
+
+    [*] --> loading: open /posts
+    loading --> hasData: 1+ posts
+    loading --> empty: 0 posts
+    loading --> error: list can't load
+    error --> loading: Retry
+    empty --> hasData: first post created · refresh
+    hasData --> hasData: another post created · refresh
+```
+
+| State | What the user sees |
+|---|---|
+| `loading` | The form, ready to use, with a grey skeleton of three post cards below it where the list will go. |
+| `hasData` | One list item per post, newest first: title as a heading, then content. |
+| `empty` | "No posts yet" and a "Write your first post" link that moves focus to the Title field. |
+| `error` | A card saying "Couldn't load your posts" with a Retry button that fetches the list again. |
+
+Arrows tested:
+- `[*] --> loading`: In DevTools, throttle the network to Slow 4G, then reload `/posts`.
+- `loading --> hasData`: Load `/posts` as `demo-user` after creating a post.
+- `loading --> empty`: Load `/posts` with `x-user-id` set to a student with no posts.
+- `loading --> error`: Stop the database while `pnpm dev` keeps running, then reload `/posts`.
+- `error --> loading`: Start the database again, then press Retry.
+- `empty --> hasData` and `hasData --> hasData`: Submit the form; the new post appears at the top.
+
+### Writing: the post form
 
 ```mermaid
 stateDiagram-v2
@@ -98,6 +132,12 @@ sends a request.
   return an empty list.
 
 ## Constraints & decisions
+- The list is read on the server (`PostList` is a Server Component): it
+  depends only on who is signed in, which the server already knows, so the
+  posts arrive with the HTML.
+- The list's loading state is a `<Suspense>` boundary around `PostList` in
+  `page.tsx`, not a route-level `loading.tsx`, so the form is usable while
+  the list loads.
 - `createPost` accepts only `title` and `content`. `id`, `studentId`,
   `createdAt` and `updatedAt` are set by the server.
 - A post needs a real student behind it (foreign key to `Student`). The
