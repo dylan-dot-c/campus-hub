@@ -11,6 +11,8 @@ Each student sees only the posts they wrote through this endpoint.
 - `packages/domain/src/schemas/post.ts`: `Post` Zod schema
 - `packages/domain/src/queries/posts.ts`: `listPosts`, `createPost`
 - `apps/web/app/api/posts/route.ts`: `GET` and `POST /api/posts`
+- `apps/web/app/posts/`: the `/posts` page: `Post.tsx` (form) and
+  `PostList.tsx` (the student's own posts, rendered on the server)
 - `packages/domain/tests/post-schema.test.ts`: schema tests
 
 
@@ -23,6 +25,9 @@ Each student sees only the posts they wrote through this endpoint.
 - A body that fails `CreatePost` returns 400 `VALIDATION`.
 - A signed-out request returns 401 `UNAUTHENTICATED`.
 - A student never sees another student's posts through this endpoint.
+- The `/posts` page shows the form, then the current student's posts newest
+  first (title as a heading, then content), or "No posts yet" when there are
+  none.
 - Every error has the shape `{ error: { code, message } }`.
 
 | Path       | Method | Input schema | Error codes                                       | Scoped by |
@@ -41,7 +46,7 @@ stateDiagram-v2
     ready --> empty: erase title
     ready --> posting: submit
     empty --> error: submit (title only spaces)
-    posting --> empty: 201 · clear + refresh
+    posting --> empty: 201 · clear + refresh (new post appears in the list)
     posting --> error: 400 (shows API error message)
     posting --> error: network fail (catch)
     error --> ready: type title
