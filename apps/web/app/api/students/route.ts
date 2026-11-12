@@ -1,4 +1,4 @@
-import { currentUserId } from "@project/auth";
+import { createSession, currentUserId, sessionCookie } from "@project/auth";
 import { Student, createStudent, getStudent } from "@project/domain";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export async function GET() {
   return Response.json({ student });
 }
 
-// signup — public, so no identity check
+// signup — public, so no identity check; a new student comes back signed in
 export async function POST(req: Request) {
   let body: unknown;
   try {
@@ -43,9 +43,9 @@ export async function POST(req: Request) {
     );
   }
 
+  let student;
   try {
-    const student = await createStudent(parsed.data);
-    return Response.json({ student }, { status: 201 });
+    student = await createStudent(parsed.data);
   } catch (e) {
     // P2002: unique constraint — email already taken
     if ((e as { code?: string }).code === "P2002")
@@ -55,4 +55,7 @@ export async function POST(req: Request) {
       );
     throw e;
   }
+
+  const token = await createSession(student.id);
+  return Response.json({ student }, { status: 201, headers: { "Set-Cookie": sessionCookie(token) } });
 }
