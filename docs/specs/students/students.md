@@ -15,9 +15,15 @@ students can.
 - `apps/web/app/signup/SignupForm.tsx`: the signup form (client component)
 - `apps/web/app/signup/page.tsx`: `/signup`, renders `SignupForm`
 - `packages/domain/tests/student-schema.test.ts`: schema tests
+- `tests/integration/students.test.ts`: signup and profile transaction tests
 
 ## Behavior
-- `POST /api/students` creates a student. It is public: it needs no identity.
+- `POST /api/students` creates a student and an empty linked profile in one
+  transaction. It is public: it needs no identity.
+- The profile's `studentId` is the newly created student's ID, never a
+  client-supplied ID. Its optional information fields start as null.
+- If either record cannot be created, neither record is saved. The response
+  still contains only the safe student fields; it does not include the profile.
 - The email is trimmed and lowercased, and must be at `cuny.edu` or a
   subdomain of it ([ADR-0013](../../adr/0013-cuny-email-signup.md)).
 - The password is 8–128 characters and is stored only as a salted scrypt
@@ -93,6 +99,12 @@ Arrows to ride:
 
 ## Verify
 - `pnpm test` runs the `Student` schema tests.
+- `pnpm test:integration` verifies signup creates exactly one linked empty
+  profile, duplicate-email signup leaves no additional records, and a profile
+  creation failure rolls back student creation.
+- After a successful signup with `pnpm dev` running, inspect `Student` and
+  `Profile` in Prisma Studio: the returned student ID matches the profile's
+  `studentId`, and the profile information fields are null.
 - With `pnpm dev` running: the curl cases in Examples return the statuses
   shown, and every arrow under UI states has been ridden in the browser.
 
@@ -106,5 +118,7 @@ Arrows to ride:
 
 ## Out of scope
 - Login, sessions, logout: [auth](../auth.md) target, no feature spec yet.
-- Creating a profile at signup: owned by [profiles](../profiles/profiles.md).
+- Editing profile information: see [profiles](../profiles/profiles.md).
+- Backfilling profiles for existing students and changing the standalone
+  profile-creation endpoint.
 - Changing email or password, deleting an account: no spec yet.
