@@ -32,6 +32,7 @@ async function main() {
       id: "demo-user",
       email: "jane.doe@qc.cuny.edu",
       passwordHash: hashPassword("demo-password"),
+      profile: { create: {}}
     },
   });
   console.log("seed: demo student jane.doe@qc.cuny.edu");
