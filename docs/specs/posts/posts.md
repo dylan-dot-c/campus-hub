@@ -83,6 +83,7 @@ stateDiagram-v2
     posting --> empty: 201 · clear + refresh (new post appears in the list)
     posting --> error: 400 (shows API error message)
     posting --> error: network fail (catch)
+    posting --> error: no answer in 10 s (timeout)
     error --> ready: type title
     error --> empty: erase title
     error --> posting: submit
@@ -99,6 +100,10 @@ Arrows tested:
 - `posting --> empty` (201): Untested until a test user exists.
 - `posting --> error` (400): Enter a title longer than 120 characters and submit.
 - `posting --> error` (network fail): Stop `pnpm dev` after opening `/posts`, then submit.
+- `posting --> error` (timeout): In DevTools → Network, add a custom throttle
+  profile with 15000 ms latency, then submit; after 10 s the alert reads
+  "Not sure that saved. Check your posts below.", the inputs are kept, and
+  the list reloads so it shows whether the post was saved after all.
 - `error --> ready`: After an error, type a non-whitespace title.
 - `error --> empty`: After an error, erase the title or replace it with whitespace.
 - `error --> posting`: After an error, submit again.
