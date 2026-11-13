@@ -1,226 +1,152 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { type SubmitHandler, useForm } from "react-hook-form";
 
-type ProfileForm = {
-  linkedIn: string;
-  github: string;
-  avatar: string;
-  college: string;
+import { useRef, useState } from "react";
+import { UpdateProfile } from "../../../packages/domain/src/schemas/profiles";
+
+type Values = {
   description: string;
-  classStanding: string;
+  linkedin: string;
+  github: string;
+  profileUrl: string;
+  collegeId: string;
 };
-// LinkedIn profile URL
-const linkedinRegex =
-  /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_%\-]+\/?$/;
+type Props = {
+  initialValues: { [K in keyof Values]: string | null };
+  colleges: { id: string; name: string }[];
+};
+const labels: Record<keyof Values, string> = {
+  description: "Description", linkedin: "LinkedIn URL", github: "GitHub URL",
+  profileUrl: "Avatar URL", collegeId: "College",
+};
 
-// GitHub profile URL
-const githubRegex =
-  /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?\/?$/;
-
-// Image URL (URL ending in a common image extension)
-const imageUrlRegex =
-  /^https?:\/\/.+\.(?:jpg|jpeg|png|gif|webp|svg|avif)(?:\?.*)?$/i;
-
-const Profile = () => {
-  // const [linkedIn, setLinkedIn] = useState("");
-
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ProfileForm>({
-    defaultValues: {
-      linkedIn: "",
-      github: "",
-      avatar: "",
-      college: "",
-      description: "",
-      classStanding: "",
-    },
+export default function ProfileForm({ initialValues, colleges }: Props) {
+  const [values, setValues] = useState<Values>({
+    description: initialValues.description ?? "", linkedin: initialValues.linkedin ?? "",
+    github: initialValues.github ?? "", profileUrl: initialValues.profileUrl ?? "",
+    collegeId: initialValues.collegeId ?? "",
   });
+  const [status, setStatus] = useState<"editing" | "saving" | "saved" | "error">("editing");
+  const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
+  const pending = useRef(false);
+  const form = useRef<HTMLFormElement>(null);
 
-  const colleges = ["Lehman College", "BCC", "City College", "Hunter College"];
-  const standings = ["Freshman", "Sophomore", "Junior", "Senior", "Graduate"];
+  function edit(field: keyof Values, value: string) {
+    setValues((previous) => ({ ...previous, [field]: value }));
+    setErrors((previous) => ({ ...previous, [field]: undefined }));
+    setStatus("editing");
+    setMessage("");
+  }
 
-  console.log(errors);
-
-  const onSubmit: SubmitHandler<ProfileForm> = async (data) => {
-    setError(null);
-    const res = await fetch("/api/profiles", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-      setError(data?.error?.message ?? "Something went wrong");
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (pending.current) return;
+    const parsed = UpdateProfile.safeParse(values);
+    if (!parsed.success) {
+      const fieldErrors: Partial<Record<keyof Values, string>> = {};
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0] as keyof Values;
+        if (field in labels && !fieldErrors[field]) fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      const first = Object.keys(fieldErrors)[0];
+      if (first) form.current?.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
       return;
     }
-    router.refresh();
-  };
+    pending.current = true;
+    setStatus("saving");
+    setErrors({});
+    setMessage("");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch("/api/profiles/me", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data), signal: controller.signal,
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setStatus("error");
+        setMessage(body?.error?.message ?? "Could not save profile. Try again.");
+        return;
+      }
+      setStatus("saved");
+      setMessage("Profile saved");
+    } catch {
+      setStatus("error");
+      setMessage(controller.signal.aborted
+        ? "Saving timed out. Your changes may have saved; retry to confirm."
+        : "Could not reach the server. Your edits are still here. Try again.");
+    } finally {
+      clearTimeout(timer);
+      pending.current = false;
+    }
+  }
+
+  const controlClass = "border block border-gray-300 rounded-md";
+  function fieldProps(field: keyof Values, id: string = field) {
+    return {
+      id, name: field, value: values[field], className: controlClass,
+      "aria-invalid": Boolean(errors[field]),
+      "aria-describedby": errors[field] ? `${id}-error` : undefined,
+      onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => edit(field, event.target.value),
+    };
+  }
+  function fieldError(field: keyof Values, id: string = field) {
+    return errors[field] && <p id={`${id}-error`} className="text-red-500" role="alert">{errors[field]}</p>;
+  }
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Update Profile Information</h1>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 max-w-4xl border border-gray-300 p-4"
-      >
-        <div className="flex justify-between ">
-          <div className="flex flex-col">
-            <label htmlFor="linkedin" className="block">
-              LinkedIn URL
-            </label>
-            <input
-              {...register("linkedIn", {
-                required: "LinkedIn URL is required",
-                pattern: {
-                  value: linkedinRegex,
-                  message: "Invalid LinkedIn URL",
-                },
-              })}
-              className="border block border-gray-300 rounded-md  "
-              type="text"
-              id="linkedin"
-              aria-invalid={errors.linkedIn ? "true" : "false"}
-            />
-            {errors.linkedIn && (
-              <p className="text-red-500" role="alert">
-                {errors.linkedIn?.message}
-              </p>
-            )}
+      <form ref={form} onSubmit={submit} noValidate className="space-y-4 max-w-4xl border border-gray-300 p-4">
+        <fieldset disabled={status === "saving"} className="space-y-4">
+          <legend className="sr-only">Profile information</legend>
+          <div className="flex justify-between">
+            <div className="flex flex-col">
+              <label htmlFor="linkedin" className="block">LinkedIn URL</label>
+              <input {...fieldProps("linkedin")} type="text" />
+              {fieldError("linkedin")}
+            </div>
+            <div>
+              <label htmlFor="github" className="block">GitHub: </label>
+              <input {...fieldProps("github")} className={`${controlClass} w-auto`} type="text" />
+              {fieldError("github")}
+            </div>
           </div>
-
           <div>
-            <label htmlFor="github" className="block">
-              GitHub:{" "}
-            </label>
-            <input
-              className="border border-gray-300 rounded-md  w-auto"
-              type="text"
-              id="github"
-              {...register("github", {
-                required: "Github is required",
-                pattern: {
-                  value: githubRegex,
-                  message: "Invalid GitHub URL",
-                },
-              })}
-              aria-invalid={errors.github ? "true" : "false"}
-            />
-            {errors.github && <p role="alert">{errors.github?.message}</p>}
+            <label htmlFor="avatar" className="block">Avatar URL</label>
+            <input {...fieldProps("profileUrl", "avatar")} type="text" />
+            {fieldError("profileUrl", "avatar")}
           </div>
-        </div>
-
-        <div>
-          <label htmlFor="avatar" className="block">
-            Avatar URL
-          </label>
-          <input
-            {...register("avatar", {
-              required: "Avatar URL is required",
-              pattern: {
-                value: imageUrlRegex,
-                message: "Invalid image URL",
-              },
-            })}
-            className="border border-gray-300 rounded-md  "
-            type="text"
-            id="avatar"
-            aria-invalid={errors.avatar ? "true" : "false"}
-          />
-          {errors.avatar && <p role="alert">{errors.avatar?.message}</p>}
-        </div>
-        <div>
-          <label htmlFor="college" className="block">
-            College
-          </label>
-          <select
-            className="border border-gray-300 rounded-md  "
-            id="college"
-            {...register("college", { required: "College is required" })}
-            aria-invalid={errors.college ? "true" : "false"}
-          >
-            <option value="">Select your college</option>
-            {colleges.map((college) => (
-              <option key={college} value={college}>
-                {college}
-              </option>
-            ))}
-          </select>
-          {errors.college && <p role="alert">{errors.college?.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="standing" className="block">
-            Standing
-          </label>
-          <select
-            className="border border-gray-300 rounded-md  "
-            id="standing"
-            {...register("classStanding", { required: "Standing is required" })}
-            aria-invalid={errors.classStanding ? "true" : "false"}
-          >
-            <option value="">Select your Standing</option>
-            {standings.map((standing) => (
-              <option key={standing} value={standing}>
-                {standing}
-              </option>
-            ))}
-          </select>
-          {errors.classStanding && (
-            <p role="alert">{errors.classStanding?.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block">
-            Description
-          </label>
-          <textarea
-            cols={70}
-            className="border border-gray-300 rounded-md  "
-            id="description"
-            {...register("description", {
-              required: "Description is required",
-              minLength: {
-                value: 30,
-                message: "Description is too short",
-              },
-            })}
-            aria-invalid={errors.description ? "true" : "false"}
-          />
-          {errors.description && (
-            <p role="alert">{errors.description?.message}</p>
-          )}
-        </div>
-
-        {isSubmitting ? (
-          <button
-            disabled={true}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
-          >
-            Loading...
+          <div>
+            <label htmlFor="college" className="block">College</label>
+            <select {...fieldProps("collegeId", "college")}>
+              <option value="">Select your college</option>
+              {colleges.map((college) => <option key={college.id} value={college.id}>{college.name}</option>)}
+            </select>
+            {fieldError("collegeId", "college")}
+          </div>
+          <div>
+            <label htmlFor="standing" className="block">Standing</label>
+            <select id="standing" className={controlClass} disabled aria-describedby="standing-help" defaultValue="">
+              <option value="">Select your Standing</option>
+              {["Freshman", "Sophomore", "Junior", "Senior", "Graduate"].map((standing) => <option key={standing} value={standing}>{standing}</option>)}
+            </select>
+            <p id="standing-help" className="text-sm">Standing is not available to save yet.</p>
+          </div>
+          <div>
+            <label htmlFor="description" className="block">Description</label>
+            <textarea {...fieldProps("description")} cols={70} />
+            {fieldError("description")}
+          </div>
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">
+            {status === "saving" ? "Loading..." : "Save Profile"}
           </button>
-        ) : (
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
-          >
-            Save Profile
-          </button>
-        )}
-        {error && <p className="self-center text-sm text-red-600">{error}</p>}
+        </fieldset>
+        <p role="status" aria-live="polite">{status === "saving" ? "Saving profile…" : status === "saved" ? message : ""}</p>
+        {status === "error" && <p role="alert" className="self-center text-sm text-red-600">{message}</p>}
       </form>
     </div>
   );
-};
-
-export default Profile;
+}

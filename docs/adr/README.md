@@ -21,4 +21,5 @@ that supersedes the old one.
 | 0011 | [Ideation pipeline + @research subagent](0011-ideation-pipeline.md) | Accepted |
 | 0012 | [Email + password accounts instead of GitHub OAuth](0012-email-password-auth.md) | Accepted |
 | 0013 | [Signup restricted to CUNY email addresses](0013-cuny-email-signup.md) | Accepted |
+| 0014 | [Hand-rolled database sessions instead of Auth.js](0014-hand-rolled-database-sessions.md) | Accepted |
 EOF

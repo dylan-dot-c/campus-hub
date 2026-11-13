@@ -12,3 +12,13 @@ export const Student = z.object({
 });
 
 export type CreateStudentInput = z.infer<typeof Student>;
+
+// sign-in normalizes email the same way as signup, but skips the CUNY check —
+// a non-CUNY email simply matches no account
+// TODO: later, sign-in will also require a .edu email, like signup does
+export const SignIn = z.object({
+  email: z.string().trim().toLowerCase().min(1, "Email is required"),
+  password: z.string().min(1, "Password is required").max(128),
+});
+
+export type SignInInput = z.infer<typeof SignIn>;

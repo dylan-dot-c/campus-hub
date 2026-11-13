@@ -24,7 +24,7 @@ async function main() {
   }
   console.log(`seed: ${colleges.length} colleges`);
 
-  // id matches the identity stub's fallback, so the demo works with no header
+  // sign in at /login as jane.doe@qc.cuny.edu / demo-password
   await prisma.student.upsert({
     where: { id: "demo-user" },
     update: {},
@@ -32,6 +32,7 @@ async function main() {
       id: "demo-user",
       email: "jane.doe@qc.cuny.edu",
       passwordHash: hashPassword("demo-password"),
+      profile: { create: {}}
     },
   });
   console.log("seed: demo student jane.doe@qc.cuny.edu");

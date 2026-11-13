@@ -1,8 +1,7 @@
 # @project/auth — identity / auth
 
-The "who is the current user?" logic. Currently a deliberately naive dev stub.
-In Week 8 it's replaced with real authentication shared across the web app
-and the worker.
+The "who is the current user?" logic: database sessions behind an HttpOnly
+cookie. The contract is `docs/specs/auth.md`.
 
 ## Public API
 
@@ -10,30 +9,30 @@ All exports come from `src/index.ts`:
 
 | Export | What it does |
 |---|---|
-| `currentUserId()` | Returns the current user's ID. Reads from `x-user-id` request header, then `DEV_USER_ID` env var, then falls back to `demo-user`. |
+| `currentUserId()` | Returns the signed-in student's id from the `session` cookie, or `null`. |
+| `createSession(studentId)` | Inserts a `Session` row and returns the raw token. Call only after verifying credentials. |
+| `deleteSession(token)` | Deletes that token's session (sign out). |
+| `sessionCookie(token)` / `clearedSessionCookie()` | `Set-Cookie` header values that set or clear the cookie. |
+| `tokenFromRequest(req)` | Reads the session token from a `Request`'s `Cookie` header. |
 
 ## Dependencies
 
-- `next` — for `next/headers` (the dev stub reads the HTTP request's headers)
+- `@project/db` — the `Session` table
+- `next` — `next/headers` (`currentUserId()` reads the request's cookies)
 
 ## Consumers
 
 - `apps/web` — via `@project/auth`
 
-## The dev stub
+## How a request is identified
 
 ```ts
 currentUserId()
-  1. x-user-id request header (if present)
-  2. DEV_USER_ID env var (if set)
-  3. "demo-user" (created by the seed script)
+  1. read the `session` cookie            → none: null
+  2. SHA-256 the token, find the Session  → none: null
+  3. expired?                             → yes: null
+  4. return session.studentId
 ```
 
-In development, this trusts the client to say who they are. That's intentional.
-Week 8 replaces it with real auth (OAuth, JWTs, middleware) that works for both
-the web app and the worker.
-
-## Disabled in production
-
-The dev stub throws if `NODE_ENV === "production"` unless `ALLOW_DEV_IDENTITY` is
-set. Real auth in Week 8 removes this guard.
+The token is never stored — only its hash — so a database leak hands out no
+working cookies. Signing out deletes the row, so a stale cookie stops working.

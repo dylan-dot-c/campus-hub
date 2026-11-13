@@ -22,8 +22,22 @@ model Student {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  profile Profile? @relation("StudentProfile")
-  posts   Post[]   @relation("StudentPosts")
+  profile  Profile?  @relation("StudentProfile")
+  posts    Post[]    @relation("StudentPosts")
+  sessions Session[] @relation("StudentSessions")
+}
+
+// one row per signed-in browser; the cookie holds the token, the row only its hash
+model Session {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  studentId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  student Student @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
 }
 
 model Profile {

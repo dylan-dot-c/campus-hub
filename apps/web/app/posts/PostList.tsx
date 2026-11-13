@@ -1,9 +1,7 @@
 // no "use client" here, so this runs on the server
-import { currentUserId } from "@project/auth";
 import { listPosts } from "@project/domain";
 
-export async function PostList() {
-  const userId = await currentUserId();
+export async function PostList({userId}: {userId: string}) {
   const posts = await listPosts(userId);
 
   if (posts.length === 0) {

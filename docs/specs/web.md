@@ -46,5 +46,5 @@ Every route handler and Server Action, in order:
 
 ## Key decisions
 
-- [ADR-0003](../adr/0003-dev-identity-stub.md) — identity stub + production guard.
+- [ADR-0014](../adr/0014-hand-rolled-database-sessions.md) — identity from database sessions.
 - [ADR-0009](../adr/0009-domain-web-only.md) — schemas/queries live in `packages/domain`.
