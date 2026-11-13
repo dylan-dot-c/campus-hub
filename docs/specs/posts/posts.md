@@ -30,6 +30,8 @@ Each student sees only the posts they wrote through this endpoint.
 - The `/posts` page shows the form, then the current student's posts newest
   first (title as a heading, then content). The list has its own loading,
   empty, and error states (see UI states).
+- A signed-out visit to `/posts` redirects to `/login`. `page.tsx` reads the
+  signed-in student once and passes their id to `PostList`.
 - Every error has the shape `{ error: { code, message } }`.
 
 | Path       | Method | Input schema | Error codes                                       | Scoped by |
@@ -63,8 +65,10 @@ stateDiagram-v2
 
 Arrows tested:
 - `[*] --> loading`: In DevTools, throttle the network to Slow 4G, then reload `/posts`.
-- `loading --> hasData`: Load `/posts` as `demo-user` after creating a post.
-- `loading --> empty`: Load `/posts` with `x-user-id` set to a student with no posts.
+- `loading --> hasData`: Sign in as Jane (`jane.doe@qc.cuny.edu`), create a
+  post, then reload `/posts`.
+- `loading --> empty`: Sign up a new student at `/signup`, sign in as them,
+  and open `/posts`.
 - `loading --> error`: Stop the database while `pnpm dev` keeps running, then reload `/posts`.
 - `error --> loading`: Start the database again, then press Retry.
 - `empty --> hasData` and `hasData --> hasData`: Submit the form; the new post appears at the top.
@@ -135,6 +139,7 @@ sends a request.
 - With `pnpm dev` running, sign in as one student and create a post, then
   sign in as a second student in another browser: `/api/posts` returns an
   empty list.
+- Signed out (or in a private window), open `/posts`: you land on `/login`.
 
 ## Constraints & decisions
 - The list is read on the server (`PostList` is a Server Component): it
