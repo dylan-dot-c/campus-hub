@@ -11,6 +11,10 @@ Each student sees only the posts they wrote through this endpoint.
 - `packages/domain/src/schemas/post.ts`: `Post` Zod schema
 - `packages/domain/src/queries/posts.ts`: `listPosts`, `createPost`
 - `apps/web/app/api/posts/route.ts`: `GET` and `POST /api/posts`
+- `apps/web/app/posts/`: the `/posts` page: `Post.tsx` (form),
+  `PostList.tsx` (the student's own posts, rendered on the server, plus
+  `PostListSkeleton` for loading),
+  `error.tsx` (retry card when the list can't load)
 - `packages/domain/tests/post-schema.test.ts`: schema tests
 
 
@@ -23,6 +27,11 @@ Each student sees only the posts they wrote through this endpoint.
 - A body that fails `CreatePost` returns 400 `VALIDATION`.
 - A signed-out request returns 401 `UNAUTHENTICATED`.
 - A student never sees another student's posts through this endpoint.
+- The `/posts` page shows the form, then the current student's posts newest
+  first (title as a heading, then content). The list has its own loading,
+  empty, and error states (see UI states).
+- A signed-out visit to `/posts` redirects to `/login`. `page.tsx` reads the
+  signed-in student once and passes their id to `PostList`.
 - Every error has the shape `{ error: { code, message } }`.
 
 | Path       | Method | Input schema | Error codes                                       | Scoped by |
@@ -32,6 +41,40 @@ Each student sees only the posts they wrote through this endpoint.
 
 ## UI states
 
+### Reading: the post list
+
+```mermaid
+stateDiagram-v2
+    title PostList - State Diagram
+
+    [*] --> loading: open /posts
+    loading --> hasData: 1+ posts
+    loading --> empty: 0 posts
+    loading --> error: list can't load
+    error --> loading: Retry
+    empty --> hasData: first post created · refresh
+    hasData --> hasData: another post created · refresh
+```
+
+| State | What the user sees |
+|---|---|
+| `loading` | The form, ready to use, with a grey skeleton of three post cards below it where the list will go. |
+| `hasData` | One list item per post, newest first: title as a heading, then content. |
+| `empty` | "No posts yet" and a "Write your first post" link that moves focus to the Title field. |
+| `error` | A card saying "Couldn't load your posts" with a Retry button that fetches the list again. |
+
+Arrows tested:
+- `[*] --> loading`: In DevTools, throttle the network to Slow 4G, then reload `/posts`.
+- `loading --> hasData`: Sign in as Jane (`jane.doe@qc.cuny.edu`), create a
+  post, then reload `/posts`.
+- `loading --> empty`: Sign up a new student at `/signup`, sign in as them,
+  and open `/posts`.
+- `loading --> error`: Stop the database while `pnpm dev` keeps running, then reload `/posts`.
+- `error --> loading`: Start the database again, then press Retry.
+- `empty --> hasData` and `hasData --> hasData`: Submit the form; the new post appears at the top.
+
+### Writing: the post form
+
 ```mermaid
 stateDiagram-v2
     title Post - State Diagram
@@ -40,9 +83,11 @@ stateDiagram-v2
     empty --> ready: type title
     ready --> empty: erase title
     ready --> posting: submit
-    posting --> empty: 201 · clear + refresh
+    empty --> error: submit (title only spaces)
+    posting --> empty: 201 · clear + refresh (new post appears in the list)
     posting --> error: 400 (shows API error message)
     posting --> error: network fail (catch)
+    posting --> error: no answer in 10 s (timeout)
     error --> ready: type title
     error --> empty: erase title
     error --> posting: submit
@@ -53,12 +98,31 @@ Arrows tested:
 - `empty --> ready`: Type a non-whitespace title.
 - `ready --> empty`: Erase the title or replace it with whitespace.
 - `ready --> posting`: Enter a title and submit the form.
+- `empty --> error`: Type only spaces in the title and press Post; the alert
+  reads "Title is required." (A fully empty title is stopped by the
+  browser's `required` message instead.)
 - `posting --> empty` (201): Untested until a test user exists.
 - `posting --> error` (400): Enter a title longer than 120 characters and submit.
 - `posting --> error` (network fail): Stop `pnpm dev` after opening `/posts`, then submit.
+- `posting --> error` (timeout): In DevTools → Network, add a custom throttle
+  profile with 15000 ms latency, then submit; after 10 s the alert reads
+  "Not sure that saved. Check your posts below.", the inputs are kept, and
+  the list reloads so it shows whether the post was saved after all.
 - `error --> ready`: After an error, type a non-whitespace title.
 - `error --> empty`: After an error, erase the title or replace it with whitespace.
 - `error --> posting`: After an error, submit again.
+
+The error message sits in a `role="alert"` region that is always in the
+page, so screen readers announce it each time the form enters `error`.
+Verify with VoiceOver: trigger either error arrow above and hear the message
+read without moving focus.
+
+The title field is `required`, so screen readers announce it as required.
+The Post button uses `aria-disabled` instead of `disabled`, so it stays in
+the Tab order in every state. While the title is blank or a post is in
+flight it is announced as dimmed and drawn at half opacity
+(`button[aria-disabled="true"]` in `globals.css`); pressing it then never
+sends a request.
 
 ## Examples
 
@@ -75,8 +139,15 @@ Arrows tested:
 - With `pnpm dev` running, sign in as one student and create a post, then
   sign in as a second student in another browser: `/api/posts` returns an
   empty list.
+- Signed out (or in a private window), open `/posts`: you land on `/login`.
 
 ## Constraints & decisions
+- The list is read on the server (`PostList` is a Server Component): it
+  depends only on who is signed in, which the server already knows, so the
+  posts arrive with the HTML.
+- The list's loading state is a `<Suspense>` boundary around `PostList` in
+  `page.tsx`, not a route-level `loading.tsx`, so the form is usable while
+  the list loads.
 - `createPost` accepts only `title` and `content`. `id`, `studentId`,
   `createdAt` and `updatedAt` are set by the server.
 - A post needs a real student behind it (foreign key to `Student`); a

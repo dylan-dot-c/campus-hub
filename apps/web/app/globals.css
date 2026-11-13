@@ -10,4 +10,9 @@
   form p[role="alert"] {
     color: theme("colors.red.500");
   }
+
+  button[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
